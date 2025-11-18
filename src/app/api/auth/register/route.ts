@@ -14,7 +14,18 @@ export async function POST(request: NextRequest) {
         }
 
         const user = await flatService.register({ email, password, code });
-
+        //Tạo user trên backend
+        const name = email.split('@')[0];
+        const customer = await payload.create({
+            collection: 'customers',
+            data: {
+                name: name,
+                email: email,
+                secret_key: user.clientKey,
+                password: password,
+                status: 'active'
+            },
+        });
         return NextResponse.json({
             status: 0,
             data: user

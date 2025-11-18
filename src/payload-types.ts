@@ -74,6 +74,7 @@ export interface Config {
     subscriptions: Subscription;
     meetings: Meeting;
     invoices: Invoice;
+    plans: Plan;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -87,6 +88,7 @@ export interface Config {
     subscriptions: SubscriptionsSelect<false> | SubscriptionsSelect<true>;
     meetings: MeetingsSelect<false> | MeetingsSelect<true>;
     invoices: InvoicesSelect<false> | InvoicesSelect<true>;
+    plans: PlansSelect<false> | PlansSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -227,11 +229,53 @@ export interface Customer {
 export interface Subscription {
   id: number;
   customer: number | Customer;
-  plan: 'basic' | 'pro' | 'enterprise';
+  plan: number | Plan;
   startDate: string;
   endDate: string;
-  status?: ('active' | 'inactive' | 'cancelled' | 'expired') | null;
+  status?: ('active' | 'inactive' | 'cancelled' | 'expired' | 'pending') | null;
   autoRenew?: boolean | null;
+  currentPeriodStart?: string | null;
+  currentPeriodEnd?: string | null;
+  cancelAtPeriodEnd?: boolean | null;
+  trialEnd?: string | null;
+  usage?: {
+    participantsUsed?: number | null;
+    durationUsed?: number | null;
+    storageUsed?: number | null;
+    roomsUsed?: number | null;
+  };
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "plans".
+ */
+export interface Plan {
+  id: number;
+  name: string;
+  slug: string;
+  description?: string | null;
+  price: number;
+  currency: 'USD' | 'EUR' | 'VND';
+  billingPeriod: 'monthly' | 'quarterly' | 'yearly';
+  features?:
+    | {
+        feature: string;
+        included?: boolean | null;
+        limit?: number | null;
+        unit?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  maxParticipants: number;
+  maxDuration?: number | null;
+  recordingStorage?: number | null;
+  maxRooms?: number | null;
+  whiteboard?: boolean | null;
+  totalMinutes?: number | null;
+  status?: ('active' | 'inactive' | 'archived') | null;
+  sortOrder?: number | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -262,15 +306,67 @@ export interface Meeting {
  */
 export interface Invoice {
   id: number;
+  invoiceNumber: string;
   customer: number | Customer;
   subscription: number | Subscription;
-  invoice_id: string;
+  plan: number | Plan;
   amount: number;
   currency?: ('USD' | 'EUR' | 'VND') | null;
-  status?: ('pending' | 'paid' | 'failed' | 'refunded') | null;
-  paidDate?: string | null;
+  status?: ('draft' | 'pending' | 'paid' | 'failed' | 'refunded' | 'cancelled') | null;
+  billingPeriod: {
+    start: string;
+    end: string;
+  };
   dueDate: string;
+  paidDate?: string | null;
+  /**
+   * Add invoice line items
+   */
+  items?:
+    | {
+        description: string;
+        amount: number;
+        quantity: number;
+        /**
+         * Additional item data (optional)
+         */
+        metadata?:
+          | {
+              [k: string]: unknown;
+            }
+          | unknown[]
+          | string
+          | number
+          | boolean
+          | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Auto-calculated from items
+   */
+  subtotal: number;
+  /**
+   * Tax amount
+   */
+  taxAmount?: number | null;
+  /**
+   * Auto-calculated total
+   */
+  totalAmount: number;
   description?: string | null;
+  /**
+   * Additional invoice data
+   */
+  metadata?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -321,6 +417,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'invoices';
         value: number | Invoice;
+      } | null)
+    | ({
+        relationTo: 'plans';
+        value: number | Plan;
       } | null);
   globalSlug?: string | null;
   user:
@@ -454,6 +554,18 @@ export interface SubscriptionsSelect<T extends boolean = true> {
   endDate?: T;
   status?: T;
   autoRenew?: T;
+  currentPeriodStart?: T;
+  currentPeriodEnd?: T;
+  cancelAtPeriodEnd?: T;
+  trialEnd?: T;
+  usage?:
+    | T
+    | {
+        participantsUsed?: T;
+        durationUsed?: T;
+        storageUsed?: T;
+        roomsUsed?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
 }
@@ -479,15 +591,66 @@ export interface MeetingsSelect<T extends boolean = true> {
  * via the `definition` "invoices_select".
  */
 export interface InvoicesSelect<T extends boolean = true> {
+  invoiceNumber?: T;
   customer?: T;
   subscription?: T;
-  invoice_id?: T;
+  plan?: T;
   amount?: T;
   currency?: T;
   status?: T;
-  paidDate?: T;
+  billingPeriod?:
+    | T
+    | {
+        start?: T;
+        end?: T;
+      };
   dueDate?: T;
+  paidDate?: T;
+  items?:
+    | T
+    | {
+        description?: T;
+        amount?: T;
+        quantity?: T;
+        metadata?: T;
+        id?: T;
+      };
+  subtotal?: T;
+  taxAmount?: T;
+  totalAmount?: T;
   description?: T;
+  metadata?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "plans_select".
+ */
+export interface PlansSelect<T extends boolean = true> {
+  name?: T;
+  slug?: T;
+  description?: T;
+  price?: T;
+  currency?: T;
+  billingPeriod?: T;
+  features?:
+    | T
+    | {
+        feature?: T;
+        included?: T;
+        limit?: T;
+        unit?: T;
+        id?: T;
+      };
+  maxParticipants?: T;
+  maxDuration?: T;
+  recordingStorage?: T;
+  maxRooms?: T;
+  whiteboard?: T;
+  totalMinutes?: T;
+  status?: T;
+  sortOrder?: T;
   updatedAt?: T;
   createdAt?: T;
 }

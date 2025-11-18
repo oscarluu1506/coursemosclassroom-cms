@@ -16,7 +16,7 @@ import { useAuth } from '@/contexts/AuthContext';
 
 const Signup = () => {
   const [step, setStep] = useState(1); // 1: Basic info, 2: Verification
-  const [name, setName] = useState('');
+  // const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [code, setCode] = useState('');
@@ -46,7 +46,7 @@ const Signup = () => {
   const handleStep1 = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!name || !email || !password) {
+    if (!email || !password) {
       setError('Please fill all fields');
       return;
     }
@@ -120,11 +120,6 @@ const Signup = () => {
     setCode('');
   };
 
-  const handleGoogleSignup = () => {
-    // Implement Google signup logic here
-    console.log('Google signup clicked');
-  };
-
   // Hiển thị loading nếu đang kiểm tra trạng thái đăng nhập
   if (user?.token) {
     return (
@@ -171,14 +166,14 @@ const Signup = () => {
                   {step === 1 ? (
                       <form onSubmit={handleStep1}>
                         <div className="grid gap-4">
-                          <Input
-                              type="text"
-                              placeholder="Enter your name"
-                              value={name}
-                              onChange={(e) => setName(e.target.value)}
-                              required
-                              disabled={isLoading}
-                          />
+                          {/*<Input*/}
+                          {/*    type="text"*/}
+                          {/*    placeholder="Enter your name"*/}
+                          {/*    value={name}*/}
+                          {/*    onChange={(e) => setName(e.target.value)}*/}
+                          {/*    required*/}
+                          {/*    disabled={isLoading}*/}
+                          {/*/>*/}
                           <Input
                               type="email"
                               placeholder="Enter your email"

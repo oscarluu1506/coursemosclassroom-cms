@@ -13,6 +13,12 @@ export const Customers: CollectionConfig = {
         useAsTitle: 'name',
         defaultColumns: ['name', 'email', 'organization'],
     },
+    access: {
+        read: () => true,
+        create: ({ req }) => !!req.user,
+        update: ({ req }) => !!req.user,
+        delete: ({ req }) => !!req.user,
+    },
     fields: [
         {
             name: 'name',

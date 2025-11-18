@@ -12,6 +12,7 @@ import { Customers } from './collections/Customers'
 import { Invoices } from './collections/Invoices'
 import { Meetings } from './collections/Meetings'
 import { Subscriptions } from './collections/Subscriptions'
+import { Plans } from './collections/Plans'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -23,7 +24,7 @@ export default buildConfig({
       baseDir: path.resolve(dirname),
     },
   },
-  collections: [Users, Media, Customers, Subscriptions, Meetings, Invoices],
+  collections: [Users, Media, Customers, Subscriptions, Meetings, Invoices, Plans],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {

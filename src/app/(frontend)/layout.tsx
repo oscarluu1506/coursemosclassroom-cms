@@ -1,14 +1,14 @@
+// src/app/layout.tsx
 import { Inter } from "next/font/google";
 import localFont from "next/font/local";
-
 import type { Metadata } from "next";
 
-import { Footer } from "@/components/blocks/footer";
-import { Navbar } from "@/components/blocks/navbar";
 import { StyleGlideProvider } from "@/components/styleglide-provider";
 import { ThemeProvider } from "@/components/theme-provider";
 import "@/styles/globals.css";
 import { AuthProvider } from '@/contexts/AuthContext';
+import { LayoutWrapper} from "@/components/layout-wrapper";
+
 const dmSans = localFont({
   src: [
     {
@@ -67,7 +67,7 @@ export const metadata: Metadata = {
     template: "%s | Mainline",
   },
   description:
-    "A modern Next.js template built with shadcn/ui, Tailwind & MDX. Open source - MIT License.",
+      "A modern Next.js template built with shadcn/ui, Tailwind & MDX. Open source - MIT License.",
   keywords: [
     "Next.js",
     "nextjs template",
@@ -104,7 +104,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Mainline - Modern Next.js Template",
     description:
-      "A modern Next.js template built with shadcn/ui, Tailwind & MDX. Open source - MIT License.",
+        "A modern Next.js template built with shadcn/ui, Tailwind & MDX. Open source - MIT License.",
     siteName: "Mainline",
     images: [
       {
@@ -119,41 +119,39 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Mainline - Modern Next.js Template",
     description:
-      "A modern Next.js template built with shadcn/ui, Tailwind & MDX. Open source - MIT License.",
+        "A modern Next.js template built with shadcn/ui, Tailwind & MDX. Open source - MIT License.",
     images: ["/og-image.jpg"],
     creator: "@ausrobdev",
   },
 };
 
 export default function RootLayout({
-  children,
-}: Readonly<{
+                                     children,
+                                   }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+      <html lang="en" suppressHydrationWarning>
       <head>
         <script
-          async
-          crossOrigin="anonymous"
-          src="https://tweakcn.com/live-preview.min.js"
+            async
+            crossOrigin="anonymous"
+            src="https://tweakcn.com/live-preview.min.js"
         />
       </head>
       <body className={`${dmSans.variable} ${inter.variable} antialiased`}>
       <AuthProvider>
         <ThemeProvider
-          attribute="class"
-          defaultTheme="light"
-          enableSystem
-          disableTransitionOnChange
+            attribute="class"
+            defaultTheme="light"
+            enableSystem
+            disableTransitionOnChange
         >
           <StyleGlideProvider />
-          <Navbar />
-          <main className="">{children}</main>
-          <Footer />
+          <LayoutWrapper>{children}</LayoutWrapper>
         </ThemeProvider>
       </AuthProvider>
       </body>
-    </html>
+      </html>
   );
 }
