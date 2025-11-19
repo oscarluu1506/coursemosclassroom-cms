@@ -1,9 +1,12 @@
 // src/app/api/auth/register/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { flatService } from '@/services/flatService';
+import {getPayload} from "payload";
+import config from "@payload-config";
 
 export async function POST(request: NextRequest) {
     try {
+        const payload = await getPayload({ config })
         const { email, password, code } = await request.json();
 
         if (!email || !password || !code) {
@@ -21,7 +24,7 @@ export async function POST(request: NextRequest) {
             data: {
                 name: name,
                 email: email,
-                secret_key: user.clientKey,
+                secret_key: '',
                 password: password,
                 status: 'active'
             },

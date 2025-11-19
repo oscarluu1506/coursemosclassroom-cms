@@ -81,6 +81,7 @@ const RoomManagement: React.FC<RoomManagementProps> = ({ user }) => {
         try {
             const roomData = await flatService.getUserRooms(user.token, currentPage, 50); // Tăng số lượng để phân trang tốt hơn
             setRooms(roomData.list);
+            console.log(roomData.list)
             setTotalRooms(roomData.total);
         } catch (error: any) {
             console.error('Error fetching rooms:', error);
@@ -214,10 +215,10 @@ const RoomManagement: React.FC<RoomManagementProps> = ({ user }) => {
     };
 
     const getRoomStatus = (room: RoomItem): RoomStatus => {
-        if (room.room_is_delete === 1 && room.room_room_status === RoomStatus.Idle) {
+        if (room.room_is_delete === 1 && room.room_status === RoomStatus.Idle) {
             return RoomStatus.Cancelled;
         }
-        return room.room_room_status as RoomStatus;
+        return room.room_status as RoomStatus;
     };
 
     const getRoomStatusBadge = (room: RoomItem) => {
@@ -564,20 +565,20 @@ const RoomManagement: React.FC<RoomManagementProps> = ({ user }) => {
                             <div className="space-y-4">
                                 {filteredRooms.map((room) => (
                                     <div
-                                        key={room.room_room_uuid}
+                                        key={room.room_uuid}
                                         className="border rounded-lg p-4 hover:bg-gray-50 transition-colors"
                                     >
                                         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                                             <div className="flex-1">
                                                 <div className="flex items-center gap-3 mb-2">
-                                                    <h4 className="font-semibold text-lg">{room.room_title}</h4>
+                                                    <h4 className="font-semibold text-lg">{room.title}</h4>
                                                     {getRoomStatusBadge(room)}
-                                                    {room.room_has_record === 1 && (
+                                                    {room.has_record === 1 && (
                                                         <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded-full text-xs font-medium">
                                                             Recorded
                                                         </span>
                                                     )}
-                                                    {room.room_is_ai === 1 && (
+                                                    {room.is_ai === 1 && (
                                                         <span className="bg-orange-100 text-orange-800 px-2 py-1 rounded-full text-xs font-medium">
                                                             AI
                                                         </span>
@@ -585,16 +586,16 @@ const RoomManagement: React.FC<RoomManagementProps> = ({ user }) => {
                                                 </div>
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-gray-600">
                                                     <div>
-                                                        <strong>Type:</strong> {room.room_room_type}
+                                                        <strong>Type:</strong> {room.room_type}
                                                     </div>
                                                     <div>
-                                                        <strong>UUID:</strong> {room.room_room_uuid}
+                                                        <strong>UUID:</strong> {room.room_uuid}
                                                     </div>
                                                     <div>
-                                                        <strong>Start:</strong> {formatDate(room.room_begin_time)}
+                                                        <strong>Start:</strong> {formatDate(room.begin_time)}
                                                     </div>
                                                     <div>
-                                                        <strong>End:</strong> {formatDate(room.room_end_time)}
+                                                        <strong>End:</strong> {formatDate(room.end_time)}
                                                     </div>
                                                     {/*{getRoomStatus(room) === RoomStatus.Cancelled && (*/}
                                                     {/*    <div className="md:col-span-2">*/}
@@ -606,7 +607,7 @@ const RoomManagement: React.FC<RoomManagementProps> = ({ user }) => {
                                             <div className="flex flex-col sm:flex-row gap-2">
                                                 {canJoinRoom(room) && (
                                                     <button
-                                                        onClick={() => joinRoom(room.room_room_uuid)}
+                                                        onClick={() => joinRoom(room.room_uuid)}
                                                         className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors"
                                                     >
                                                         Join Room
@@ -615,7 +616,7 @@ const RoomManagement: React.FC<RoomManagementProps> = ({ user }) => {
                                                 <button
                                                     onClick={() => {
                                                         navigator.clipboard.writeText(
-                                                            `${process.env.NEXT_PUBLIC_FLAT_CMS_BASE_URL}/join/${room.room_room_uuid}`
+                                                            `${process.env.NEXT_PUBLIC_FLAT_CMS_BASE_URL}/join/${room.room_uuid}`
                                                         );
                                                         alert('Join link copied to clipboard!');
                                                     }}
@@ -625,11 +626,11 @@ const RoomManagement: React.FC<RoomManagementProps> = ({ user }) => {
                                                 </button>
                                                 {canStopRoom(room) && (
                                                     <button
-                                                        onClick={() => handleStopRoom(room.room_room_uuid, room.room_title)}
-                                                        disabled={isStopping === room.room_room_uuid}
+                                                        onClick={() => handleStopRoom(room.room_uuid, room.title)}
+                                                        disabled={isStopping === room.room_uuid}
                                                         className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg disabled:opacity-50 transition-colors"
                                                     >
-                                                        {isStopping === room.room_room_uuid ? 'Stopping...' : 'Stop Meeting'}
+                                                        {isStopping === room.room_uuid ? 'Stopping...' : 'Stop Meeting'}
                                                     </button>
                                                 )}
                                             </div>

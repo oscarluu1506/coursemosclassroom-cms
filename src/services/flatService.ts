@@ -109,23 +109,23 @@ export interface RoomListResponse {
 }
 
 export interface RoomItem {
-    room_id: string;
-    room_created_at: string;
-    room_updated_at: string;
-    room_version: number;
-    room_room_uuid: string;
-    room_periodic_uuid: string;
-    room_owner_uuid: string;
-    room_title: string;
-    room_room_type: string;
-    room_room_status: string;
-    room_begin_time: string;
-    room_end_time: string;
-    room_region: string;
-    room_whiteboard_room_uuid: string;
-    room_is_delete: number;
-    room_has_record: number;
-    room_is_ai: number;
+    id: string;
+    created_at: string;
+    updated_at: string;
+    version: number;
+    room_uuid: string;
+    periodic_uuid: string;
+    owner_uuid: string;
+    title: string;
+    room_type: string;
+    room_status: string;
+    begin_time: string;
+    end_time: string;
+    region: string;
+    whiteboard_room_uuid: string;
+    is_delete: number;
+    has_record: number;
+    is_ai: number;
     user_uuid: string;
     user_name: string;
 }
@@ -224,6 +224,7 @@ export interface OrganizationUsersSummary {
     page: number;
     limit: number;
 }
+
 export class FlatService {
     private baseURL: string;
 
@@ -364,7 +365,7 @@ export class FlatService {
             console.log('Fetching user rooms with token:', token.substring(0, 20) + '...');
 
             const response = await axios.get<RoomListResponse>(
-                `${this.baseURL}/v1/user/parent/list-room`,
+                `${this.baseURL}/v1/user/organization/list-room`,
                 {
                     headers: {
                         'Authorization': `Bearer ${token}`,
@@ -403,7 +404,7 @@ export class FlatService {
             };
 
             const response = await axios.post<StopRoomResponse>(
-                `${this.baseURL}/v1/user/parent/room/update-status/stopped`,
+                `${this.baseURL}/v1/user/organization/room/update-status/stopped`,
                 requestData,
                 {
                     headers: {
@@ -438,54 +439,69 @@ export class FlatService {
         email: string;
     }, customer: any): Promise<FlatRoom> {
         try {
-            console.log('Creating room (legacy method), baseURL:', this.baseURL);
-
+            const publicUrl = process.env.NEXT_PUBLIC_URL || 'localhost:3000'
             // Tạo clientKey từ secret_key của customer
             const clientKey = this.generateClientKey(customer.secret_key ?? customer.flatUser.clientKey);
 
-            const requestData: CreateOrdinaryRoomRequest = {
-                title: roomData.title,
-                type: roomData.type,
-                beginTime: roomData.beginTime,
-                endTime: roomData.endTime,
-                pmi: false,
-                region: 'cn-hz',
-                email: roomData.email,
-                clientKey: clientKey
-            };
+            const tokenResponse = await fetch(`${publicUrl}/data-token/create-room-token`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    ...roomData,
+                    clientKey
+                }),
+            });
 
-            console.log('Creating Flat.io room with data:', requestData);
-
-            const response = await axios.post(
-                `${this.baseURL}/v1/room/create/ordinary-by-user`,
-                requestData,
-                {
-                    headers: {
-                        'Content-Type': 'application/json',
-                    }
-                }
-            );
-            if (response.data.status == 0) {
-                console.log('Flat.io room created successfully:', response.data);
-
-                return {
-                    roomUUID: response.data.data.roomUUID,
-                    roomId: response.data.data.roomId,
-                    joinUrl: `${process.env.NEXT_PUBLIC_FLAT_CMS_BASE_URL}/join/${response.data.data.roomUUID}`,
-                    createdAt: response.data.data.createdAt
-                };
-            }else {
-                console.log('Failed to Flat.io room', response.data);
-                return response.data;
+            if (!tokenResponse.ok) {
+                throw new Error('Failed to generate token');
             }
 
+            const { token } = await tokenResponse.json();
+
+            // Gọi API tạo phòng với token
+            const result = await this.createRoomWithToken(token)
+            if (result.status === 0) {
+                const flatRoom = {
+                    roomUUID: result.data.roomUUID,
+                    roomId: result.data.roomId,
+                    joinUrl: `${process.env.NEXT_PUBLIC_FLAT_CMS_BASE_URL}/join/${result.data.roomUUID}`,
+                    createdAt: result.data.createdAt
+                };
+
+
+                return flatRoom;
+
+            } else {
+                throw new Error(result.message || 'Failed to create room');
+            }
 
         } catch (error: any) {
-            console.error('Error creating Flat.io room:', error);
-            console.error('Request data:', roomData);
-            console.error('Error response:', error.response?.data);
-            throw new Error(`Failed to create Flat.io room: ${error.response?.data?.message || error.message}`);
+            throw new Error(`Failed to create room: ${error.message}`);
         }
+    }
+
+    async createRoomWithToken(token) : Promise<FlatRoom> {
+        const response = await fetch(`${this.baseURL}/v1/room/create/ordinary-by-user`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ token }),
+        });
+        return response.json();
+    }
+
+    async updateRoomWithToken(token) : Promise<FlatRoom> {
+        const response = await fetch(`${this.baseURL}/v1/user/organization/room/update/ordinary`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ token }),
+        });
+        return response.json();
     }
 
     /**
@@ -501,7 +517,7 @@ export class FlatService {
             };
 
             const response = await axios.post<RoomInfoResponse>(
-                `${this.baseURL}/v1/user/parent/room/info/ordinary`,
+                `${this.baseURL}/v1/user/organization/room/info/ordinary`,
                 requestData,
                 {
                     headers: {
@@ -592,7 +608,7 @@ export class FlatService {
 
             if (roomStatus) {
                 filteredRooms = filteredRooms.filter(room =>
-                    room.room_room_status === roomStatus
+                    room.room_status === roomStatus
                 );
             }
 
@@ -603,7 +619,7 @@ export class FlatService {
             for (const room of filteredRooms) {
                 try {
                     // Lấy thông tin chi tiết của từng phòng để có beginTime và endTime chính xác
-                    const roomInfo = await this.getRoomInfo(room.room_room_uuid, token);
+                    const roomInfo = await this.getRoomInfo(room.room_uuid, token);
 
                     const beginTime = roomInfo.roomInfo.beginTime;
                     const endTime = roomInfo.roomInfo.endTime;
@@ -614,7 +630,7 @@ export class FlatService {
                     totalMinutes += duration;
 
                     roomsWithDetails.push({
-                        roomUUID: room.room_room_uuid,
+                        roomUUID: room.room_uuid,
                         title: roomInfo.roomInfo.title,
                         duration: duration,
                         beginTime: beginTime,
@@ -625,7 +641,7 @@ export class FlatService {
                     console.log(`Room "${roomInfo.roomInfo.title}": ${duration} minutes`);
 
                 } catch (error) {
-                    console.error(`Error processing room ${room.room_room_uuid}:`, error);
+                    console.error(`Error processing room ${room.room_uuid}:`, error);
                     // Vẫn tính toán dựa trên thông tin cơ bản nếu không lấy được chi tiết
                     if (room.room_begin_time && room.room_end_time) {
                         const beginTime = new Date(room.room_begin_time).getTime();
@@ -635,12 +651,12 @@ export class FlatService {
                         totalMinutes += duration;
 
                         roomsWithDetails.push({
-                            roomUUID: room.room_room_uuid,
+                            roomUUID: room.room_uuid,
                             title: room.room_title,
                             duration: duration,
                             beginTime: beginTime,
                             endTime: endTime,
-                            roomStatus: room.room_room_status
+                            roomStatus: room.room_status
                         });
                     }
                 }
@@ -714,7 +730,7 @@ export class FlatService {
             };
 
             const response = await axios.post<RoomParticipantsResponse>(
-                `${this.baseURL}/v1/user/parent/room/list-user`,
+                `${this.baseURL}/v1/user/organization/room/list-user`,
                 requestData,
                 {
                     headers: {
@@ -815,7 +831,7 @@ export class FlatService {
             const limit = options?.limit || 10;
 
             const response = await axios.get<OrganizationUsersResponse>(
-                `${this.baseURL}/v1/user/parent/list-user`,
+                `${this.baseURL}/v1/user/organization/list-user`,
                 {
                     headers: {
                         'Authorization': `Bearer ${token}`,

@@ -3,14 +3,13 @@ import { getPayload } from 'payload'
 import config from '@payload-config'
 import {authenticateCustomer} from "../../../../lib/moodle-auth-utils";
 import {flatService} from "@/services/flatService";
+import jwt from 'jsonwebtoken';
 
-// =================================================================
-// CREATE
-// =================================================================
 export async function POST(request: Request) {
     const payload = await getPayload({ config })
 
     try {
+        // Xác thực customer
         const customer = await authenticateCustomer(request)
         if (!customer) {
             return NextResponse.json(
@@ -20,66 +19,45 @@ export async function POST(request: Request) {
         }
 
         const formData = await request.formData()
-
-        const name = formData.get('name') as string
-        const moodle_course_id = formData.get('moodle_course_id') as string
-        const moodle_user_email = formData.get('moodle_user_email') as string
-        const start_time = formData.get('start_time') as string
-        const end_time = formData.get('end_time') as string
-        const duration = formData.get('duration') as string
-        if (!name) {
+        const token = formData.get('token') as string
+        if (!token) {
             return NextResponse.json(
-                { error: 'Meeting name is required.' },
+                { error: 'Token is required.' },
                 { status: 400 }
             )
         }
 
-        let flatRoom;
-        try {
-            // Tính beginTime từ start_time
-            const beginTime = new Date(Number(start_time)).getTime()
-            const endTime = new Date(Number(end_time)).getTime()
-
-
-            // Lấy email teacher từ customer hoặc từ moodle_user_email
-            const teacherEmail = moodle_user_email;
-
-            if (!teacherEmail) {
-                throw new Error('Teacher email is required');
-            }
-
-            flatRoom = await flatService.createRoom(
-                {
-                    title: name,
-                    type: 'SmallClass',
-                    beginTime: beginTime,
-                    endTime: endTime,
-                    email: teacherEmail
-                },
-                customer
-            );
-            console.log('flatRoom: '+flatRoom)
-
-
-        } catch (error) {
-            console.error('Failed to create Flat.io room:', error);
+        // Verify token và lấy dữ liệu
+        const privateKey = process.env.JWT_PRIVATE_KEY;
+        if (!privateKey) {
             return NextResponse.json(
-                { error: 'Failed to create virtual classroom: ' + (error as Error).message },
+                { error: 'Server configuration error' },
                 { status: 500 }
             )
         }
+
+        const decoded = jwt.verify(token, privateKey) as any;
+        const flatRoomResponse = await flatService.createRoomWithToken(token)
+        console.log(flatRoomResponse)
+        const flatRoom = {
+            roomUUID: flatRoomResponse.data.roomUUID,
+            roomId: flatRoomResponse.data.roomId,
+            joinUrl: `${process.env.NEXT_PUBLIC_FLAT_CMS_BASE_URL}/join/${flatRoomResponse.data.roomUUID}`,
+            createdAt: flatRoomResponse.data.createdAt
+        };
+        console.log('Flat room created successfully:', flatRoom.roomUUID);
 
         // Tạo meeting mới
         const newMeeting = await payload.create({
             collection: 'meetings',
             data: {
                 customer_id: customer.id,
-                name,
-                moodle_course_id: moodle_course_id || null,
-                moodle_user_email: moodle_user_email || null,
-                start_time: start_time ? new Date(Number(start_time)).getTime() : null,
-                end_time: end_time ? new Date(Number(end_time)).getTime() : null,
-                duration: duration ? parseInt(duration) : null,
+                name: decoded.title,
+                moodle_course_id: formData.get('moodle_course_id') as string || null,
+                moodle_user_email: decoded.email,
+                start_time: parseInt(decoded.beginTime),
+                end_time: parseInt(decoded.endTime),
+                duration: Math.round((parseInt(decoded.endTime) - parseInt(decoded.beginTime)) / (1000 * 60)),
                 flat_room_id: flatRoom.roomUUID,
                 flat_room_link: flatRoom.joinUrl,
             },
@@ -97,9 +75,129 @@ export async function POST(request: Request) {
 
     } catch (error: any) {
         console.error(`Error creating meeting: ${error.message}`)
+
+        if (error.name === 'JsonWebTokenError') {
+            return NextResponse.json(
+                { error: 'Invalid token' },
+                { status: 400 }
+            )
+        }
+
+        if (error.name === 'TokenExpiredError') {
+            return NextResponse.json(
+                { error: 'Token expired' },
+                { status: 400 }
+            )
+        }
+
         return NextResponse.json(
-            { error: 'Failed to create meeting.' },
+            { error: 'Failed to create meeting: ' + error.message },
             { status: 500 }
         )
     }
 }
+// import { NextResponse } from 'next/server'
+// import { getPayload } from 'payload'
+// import config from '@payload-config'
+// import {authenticateCustomer} from "../../../../lib/moodle-auth-utils";
+// import {flatService} from "@/services/flatService";
+//
+// // =================================================================
+// // CREATE
+// // =================================================================
+// export async function POST(request: Request) {
+//     const payload = await getPayload({ config })
+//
+//     try {
+//         const customer = await authenticateCustomer(request)
+//         if (!customer) {
+//             return NextResponse.json(
+//                 { error: 'Unauthorized' },
+//                 { status: 401 }
+//             )
+//         }
+//
+//         const formData = await request.formData()
+//
+//         const name = formData.get('name') as string
+//         const moodle_course_id = formData.get('moodle_course_id') as string
+//         const moodle_user_email = formData.get('moodle_user_email') as string
+//         const start_time = formData.get('start_time') as string
+//         const end_time = formData.get('end_time') as string
+//         const duration = formData.get('duration') as string
+//         if (!name) {
+//             return NextResponse.json(
+//                 { error: 'Meeting name is required.' },
+//                 { status: 400 }
+//             )
+//         }
+//
+//         let flatRoom;
+//         try {
+//             // Tính beginTime từ start_time
+//             const beginTime = new Date(Number(start_time)).getTime()
+//             const endTime = new Date(Number(end_time)).getTime()
+//
+//
+//             // Lấy email teacher từ customer hoặc từ moodle_user_email
+//             const teacherEmail = moodle_user_email;
+//
+//             if (!teacherEmail) {
+//                 throw new Error('Teacher email is required');
+//             }
+//
+//             flatRoom = await flatService.createRoom(
+//                 {
+//                     title: name,
+//                     type: 'SmallClass',
+//                     beginTime: beginTime,
+//                     endTime: endTime,
+//                     email: teacherEmail
+//                 },
+//                 customer
+//             );
+//             console.log('flatRoom: '+flatRoom)
+//
+//
+//         } catch (error) {
+//             console.error('Failed to create Flat.io room:', error);
+//             return NextResponse.json(
+//                 { error: 'Failed to create virtual classroom: ' + (error as Error).message },
+//                 { status: 500 }
+//             )
+//         }
+//
+//         // Tạo meeting mới
+//         const newMeeting = await payload.create({
+//             collection: 'meetings',
+//             data: {
+//                 customer_id: customer.id,
+//                 name,
+//                 moodle_course_id: moodle_course_id || null,
+//                 moodle_user_email: moodle_user_email || null,
+//                 start_time: start_time ? new Date(Number(start_time)).getTime() : null,
+//                 end_time: end_time ? new Date(Number(end_time)).getTime() : null,
+//                 duration: duration ? parseInt(duration) : null,
+//                 flat_room_id: flatRoom.roomUUID,
+//                 flat_room_link: flatRoom.joinUrl,
+//             },
+//         })
+//
+//         return NextResponse.json(
+//             {
+//                 data: {
+//                     joinUrl: flatRoom.joinUrl,
+//                     newMeeting: newMeeting
+//                 }
+//             },
+//             { status: 201 }
+//         )
+//
+//     } catch (error: any) {
+//         console.error(`Error creating meeting: ${error.message}`)
+//         return NextResponse.json(
+//             { error: 'Failed to create meeting.' },
+//             { status: 500 }
+//         )
+//     }
+// }
