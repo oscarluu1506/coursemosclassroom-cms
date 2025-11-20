@@ -47,7 +47,7 @@ export async function PATCH(request: NextRequest) {
         // Kiểm tra nếu lỗi là "document not found"
         if (error.message?.includes('not found') || error.status === 404) {
             return NextResponse.json(
-                { error: `Customer not found with ID: ${data.id}` },
+                { error: `Customer not found` },
                 { status: 404 }
             );
         }

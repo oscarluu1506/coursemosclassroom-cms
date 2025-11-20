@@ -215,7 +215,7 @@ const RoomManagement: React.FC<RoomManagementProps> = ({ user }) => {
     };
 
     const getRoomStatus = (room: RoomItem): RoomStatus => {
-        if (room.room_is_delete === 1 && room.room_status === RoomStatus.Idle) {
+        if (room.is_delete === 1 && room.room_status === RoomStatus.Idle) {
             return RoomStatus.Cancelled;
         }
         return room.room_status as RoomStatus;
@@ -260,7 +260,7 @@ const RoomManagement: React.FC<RoomManagementProps> = ({ user }) => {
     const canJoinRoom = (room: RoomItem) => {
         const status = getRoomStatus(room);
         const now = new Date();
-        const endTime = new Date(room.room_end_time);
+        const endTime = new Date(room.end_time);
         return status !== RoomStatus.Stopped &&
             status !== RoomStatus.Cancelled &&
             now < endTime;

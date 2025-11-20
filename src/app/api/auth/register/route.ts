@@ -25,8 +25,7 @@ export async function POST(request: NextRequest) {
                 name: name,
                 email: email,
                 secret_key: '',
-                password: password,
-                status: 'active'
+                password: password
             },
         });
         return NextResponse.json({

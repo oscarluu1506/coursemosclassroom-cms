@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
 }
 export async function PATCH(request: NextRequest) {
     try {
-        const payload = await getPayloadClientClient();
+        const payload = await getPayloadClient();
         const data = await request.json();
 
         console.log('📝 Update customer request received:', data);
@@ -115,7 +115,7 @@ export async function PATCH(request: NextRequest) {
         // Kiểm tra nếu lỗi là "document not found"
         if (error.message?.includes('not found') || error.status === 404) {
             return NextResponse.json(
-                { error: `Customer not found with ID: ${data.id}` },
+                { error: `Customer not found` },
                 { status: 404 }
             );
         }

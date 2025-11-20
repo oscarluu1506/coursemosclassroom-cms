@@ -107,7 +107,7 @@ const Analytics: React.FC<AnalyticsProps> = ({ user }) => {
 
             // Lọc active rooms theo điều kiện: (status='Idle' và is_delete=0) hoặc status='Started'
             const activeRooms = roomsData.list.filter(room =>
-                (room.room_status === 'Idle' && room.room_is_delete === 0) ||
+                (room.room_status === 'Idle' && room.is_delete === 0) ||
                 room.room_status === 'Started'
             );
 

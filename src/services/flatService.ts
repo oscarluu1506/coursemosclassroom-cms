@@ -27,7 +27,13 @@ export interface FlatRoom {
     joinUrl: string;
     createdAt: number;
 }
-
+export interface FlatRoomResponse {
+    status: number;
+    data: {
+        roomUUID: string;
+        inviteCode: string;
+    };
+}
 export interface FlatLoginRequest {
     email: string;
     password: string;
@@ -229,7 +235,7 @@ export class FlatService {
     private baseURL: string;
 
     constructor() {
-        this.baseURL = process.env.NEXT_PUBLIC_FLAT_BACKEND_BASE_URL;
+        this.baseURL = process.env.NEXT_PUBLIC_FLAT_BACKEND_BASE_URL || 'https://csm-classroom-server.ubion.global';
         console.log('FlatService initialized with baseURL:', this.baseURL);
     }
 
@@ -482,7 +488,7 @@ export class FlatService {
         }
     }
 
-    async createRoomWithToken(token) : Promise<FlatRoom> {
+    async createRoomWithToken(token) : Promise<FlatRoomResponse> {
         const response = await fetch(`${this.baseURL}/v1/room/create/ordinary-by-user`, {
             method: 'POST',
             headers: {
@@ -493,7 +499,7 @@ export class FlatService {
         return response.json();
     }
 
-    async updateRoomWithToken(token) : Promise<FlatRoom> {
+    async updateRoomWithToken(token) : Promise<FlatRoomResponse> {
         const response = await fetch(`${this.baseURL}/v1/user/organization/room/update/ordinary`, {
             method: 'POST',
             headers: {

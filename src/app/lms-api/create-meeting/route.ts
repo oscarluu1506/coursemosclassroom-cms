@@ -41,9 +41,7 @@ export async function POST(request: Request) {
         console.log(flatRoomResponse)
         const flatRoom = {
             roomUUID: flatRoomResponse.data.roomUUID,
-            roomId: flatRoomResponse.data.roomId,
             joinUrl: `${process.env.NEXT_PUBLIC_FLAT_CMS_BASE_URL}/join/${flatRoomResponse.data.roomUUID}`,
-            createdAt: flatRoomResponse.data.createdAt
         };
         console.log('Flat room created successfully:', flatRoom.roomUUID);
 
@@ -55,8 +53,8 @@ export async function POST(request: Request) {
                 name: decoded.title,
                 moodle_course_id: formData.get('moodle_course_id') as string || null,
                 moodle_user_email: decoded.email,
-                start_time: parseInt(decoded.beginTime),
-                end_time: parseInt(decoded.endTime),
+                start_time: decoded.beginTime,
+                end_time: decoded.endTime,
                 duration: Math.round((parseInt(decoded.endTime) - parseInt(decoded.beginTime)) / (1000 * 60)),
                 flat_room_id: flatRoom.roomUUID,
                 flat_room_link: flatRoom.joinUrl,

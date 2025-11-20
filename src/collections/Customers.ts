@@ -6,7 +6,7 @@ export const Customers: CollectionConfig = {
     // Kích hoạt tính năng xác thực cho collection này
     auth: {
         // Không cho phép user tự đăng ký qua API (chỉ admin hoặc API Moodle)
-        disableLocalStrategy: false,
+        // disableLocalStrategy: false,
         verify: false, // Tắt xác thực email (có thể bật nếu cần)
     },
     admin: {

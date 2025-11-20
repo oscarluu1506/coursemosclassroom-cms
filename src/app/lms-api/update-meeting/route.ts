@@ -35,8 +35,8 @@ interface DecodedToken {
 
 interface UpdateMeetingData {
     name: string
-    start_time: Date | null
-    end_time: Date | null
+    start_time: string | null
+    end_time: string | null
     duration: number | null
 }
 
@@ -125,8 +125,8 @@ export async function POST(request: Request) {
         // Prepare update data
         const dataToUpdate: UpdateMeetingData = {
             name: decoded.title,
-            start_time: decoded.beginTime ? new Date(decoded.beginTime) : null,
-            end_time: decoded.endTime ? new Date(decoded.endTime) : null,
+            start_time: decoded.beginTime ?? null,
+            end_time: decoded.endTime ?? null,
             duration: decoded.duration ? parseInt(decoded.duration) : null,
         }
 
