@@ -1,7 +1,7 @@
 // src/components/dashboard/panels/UserProfile.tsx
 'use client';
 
-import { FlatUser } from '@/services/flatService';
+import { FlatUser } from '@/services/flat/types';
 import { useState } from 'react';
 
 interface UserProfileProps {

@@ -2,8 +2,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { FlatUser } from '@/services/flatService';
-import { flatService, RoomItem } from '@/services/flatService';
+import { FlatUser } from '@/services/flat/types';
+import { flatService } from '@/services/flat';
+import { RoomItem } from '@/services/flat/types';
 import { useAuth } from "@/contexts/AuthContext";
 
 interface RoomManagementProps {
@@ -181,8 +182,8 @@ const RoomManagement: React.FC<RoomManagementProps> = ({ user }) => {
                     flatUser
                 }
             );
-            if (room.joinUrl) {
-                setCreatedRoom(room);
+            if (room.data.roomUUID) {
+                setCreatedRoom(room.data);
                 setFormData({
                     title: '',
                     beginTime: '',

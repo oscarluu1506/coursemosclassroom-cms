@@ -1,6 +1,6 @@
 // src/app/api/auth/register/send-code/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { flatService } from '@/services/flatService';
+import { flatService } from '@/services/flat';
 
 export async function POST(request: NextRequest) {
     try {

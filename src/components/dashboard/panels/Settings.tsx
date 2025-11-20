@@ -1,7 +1,7 @@
 // src/components/dashboard/panels/Settings.tsx
 'use client';
 
-import { FlatUser } from '@/services/flatService';
+import { FlatUser } from '@/services/flat/types';
 
 interface SettingsProps {
     user: FlatUser;

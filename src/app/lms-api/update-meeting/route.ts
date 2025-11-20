@@ -3,7 +3,7 @@ import { authenticateCustomer, checkMeetingOwner } from '../../../../lib/moodle-
 import { getPayload } from 'payload'
 import config from '@payload-config'
 import jwt from 'jsonwebtoken'
-import { flatService } from "@/services/flatService"
+import { flatService } from "@/services/flat"
 
 // Constants and error messages
 const ERROR_MESSAGES = {

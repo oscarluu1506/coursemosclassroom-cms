@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { FlatUser } from '@/services/flatService';
+import { FlatUser } from '@/services/flat/types';
 import { useAuth } from "@/contexts/AuthContext";
 import { Check, X, Clock, AlertCircle, Calendar, CreditCard, Download } from 'lucide-react';
 

@@ -1,366 +1,26 @@
 import axios from 'axios';
-import crypto from 'crypto';
+import {
+    FlatRoom,
+    FlatRoomResponse,
+    StopRoomRequest,
+    StopRoomResponse,
+    RoomListResponse,
+    RoomInfoResponse,
+    TotalMinutesResponse,
+    RoomInfoRequest,
+    RoomParticipantsRequest,
+    RoomParticipantsResponse,
+    RoomParticipantsSummary,
+    RoomItem
+} from '../types';
+import { generateClientKey } from '../utils/crypto';
+import {RoomParticipant} from "@/services/flat/types";
 
-export interface CreateOrdinaryRoomRequest {
-    title: string;
-    type: 'SmallClass';
-    beginTime: number;
-    endTime: number;
-    pmi: boolean;
-    region: string;
-    email: string;
-    clientKey: string;
-}
-
-export interface CreateOrdinaryRoomResponse {
-    roomUUID: string;
-    roomId: number;
-    roomOriginId: string;
-    inviteCode: string;
-    joinUrl: string;
-    createdAt: number;
-}
-
-export interface FlatRoom {
-    roomUUID: string;
-    roomId: number;
-    joinUrl: string;
-    createdAt: number;
-}
-export interface FlatRoomResponse {
-    status: number;
-    data: {
-        roomUUID: string;
-        inviteCode: string;
-    };
-}
-export interface FlatLoginRequest {
-    email: string;
-    password: string;
-}
-
-export interface FlatLoginResponse {
-    status: number;
-    data: {
-        name: string;
-        avatar: string;
-        userUUID: string;
-        token: string;
-        hasPhone: boolean;
-        hasPassword: boolean;
-        isAnonymous: boolean;
-        clientKey: string;
-    };
-}
-export interface StopRoomRequest {
-    roomUUID: string;
-}
-
-export interface StopRoomResponse {
-    status: number;
-    data: {
-        roomUUID: string;
-        roomStatus: string;
-    };
-}
-export interface FlatUser {
-    name: string;
-    avatar: string;
-    userUUID: string;
-    token: string;
-    hasPhone: boolean;
-    hasPassword: boolean;
-    isAnonymous: boolean;
-    clientKey: string;
-    email: string;
-}
-
-export interface SendVerificationCodeRequest {
-    email: string;
-    lang: string;
-}
-
-export interface SendVerificationCodeResponse {
-    status: number;
-    data: {};
-}
-
-export interface RegisterRequest {
-    email: string;
-    password: string;
-    code: string;
-}
-
-export interface RegisterResponse {
-    status: number;
-    data: {
-        name: string;
-        avatar: string;
-        userUUID: string;
-        token: string;
-        hasPhone: boolean;
-        hasPassword: boolean;
-        isAnonymous: boolean;
-    };
-}
-
-export interface RoomListResponse {
-    status: number;
-    data: {
-        total: number;
-        list: RoomItem[];
-        page: number;
-        limit: number;
-    };
-}
-
-export interface RoomItem {
-    id: string;
-    created_at: string;
-    updated_at: string;
-    version: number;
-    room_uuid: string;
-    periodic_uuid: string;
-    owner_uuid: string;
-    title: string;
-    room_type: string;
-    room_status: string;
-    begin_time: string;
-    end_time: string;
-    region: string;
-    whiteboard_room_uuid: string;
-    is_delete: number;
-    has_record: number;
-    is_ai: number;
-    user_uuid: string;
-    user_name: string;
-}
-export interface RoomInfoResponse {
-    status: number;
-    data: {
-        roomInfo: {
-            title: string;
-            beginTime: number;
-            endTime: number;
-            roomType: string;
-            roomStatus: 'Idle' | 'Started' | 'Stopped' | 'Paused';
-            ownerUUID: string;
-            ownerUserName: string;
-            ownerName: string;
-            hasRecord: boolean;
-            region: string;
-            inviteCode: string;
-            isPmi: boolean;
-            isAI: boolean;
-        };
-    };
-}
-
-export interface TotalMinutesResponse {
-    totalMinutes: number;
-    totalRooms: number;
-    rooms: Array<{
-        roomUUID: string;
-        title: string;
-        duration: number;
-        beginTime: number;
-        endTime: number;
-        roomStatus: string;
-    }>;
-}
-
-export interface RoomInfoRequest {
-    roomUUID: string;
-}
-export interface RoomParticipantsRequest {
-    room_uuid: string;
-    page?: number;
-    limit?: number;
-}
-
-export interface RoomParticipant {
-    room_title: string;
-    avatar_url: string;
-    user_name: string;
-}
-
-export interface RoomParticipantsResponse {
-    status: number;
-    data: {
-        total: number;
-        list: RoomParticipant[];
-        page: number;
-        limit: number;
-    };
-}
-
-export interface RoomParticipantsSummary {
-    totalParticipants: number;
-    participants: RoomParticipant[];
-    roomTitle: string;
-}
-export interface OrganizationUser {
-    id: string;
-    created_at: string;
-    updated_at: string;
-    version: number;
-    user_uuid: string;
-    user_name: string;
-    user_password: string;
-    avatar_url: string;
-    client_key: string;
-    gender: string;
-    is_delete: number;
-    parent_uuid: string;
-}
-
-export interface OrganizationUsersResponse {
-    status: number;
-    data: {
-        total: number;
-        list: OrganizationUser[];
-        page: number;
-        limit: number;
-    };
-}
-
-export interface OrganizationUsersSummary {
-    totalUsers: number;
-    users: OrganizationUser[];
-    page: number;
-    limit: number;
-}
-
-export class FlatService {
+export class RoomService {
     private baseURL: string;
 
-    constructor() {
-        this.baseURL = process.env.NEXT_PUBLIC_FLAT_BACKEND_BASE_URL || 'https://csm-classroom-server.ubion.global';
-        console.log('FlatService initialized with baseURL:', this.baseURL);
-    }
-
-    /**
-     * Generate client key từ secret key
-     */
-    public generateClientKey(secretKey: string): string {
-        return crypto
-            .createHash('md5')
-            .update(secretKey + 'test')
-            .digest('hex');
-    }
-
-    /**
-     * Gửi mã xác nhận đến email
-     */
-    async sendVerificationCode(email: string): Promise<void> {
-        try {
-            console.log('Sending verification code to email:', email);
-            console.log('Using baseURL:', this.baseURL);
-
-            const requestData: SendVerificationCodeRequest = {
-                email: email,
-                lang: 'en'
-            };
-
-            const response = await axios.post<SendVerificationCodeResponse>(
-                `${this.baseURL}/v2/register/email/send-message`,
-                requestData,
-                {
-                    headers: {
-                        'Content-Type': 'application/json',
-                    }
-                }
-            );
-
-            if (response.data.status !== 0) {
-                throw new Error('Failed to send verification code');
-            }
-
-            console.log('Verification code sent successfully to:', email);
-
-        } catch (error: any) {
-            console.error('Error sending verification code:', error);
-            console.error('Error response:', error.response?.data);
-            throw new Error(`Failed to send verification code: ${error.response?.data?.message || error.message}`);
-        }
-    }
-
-    /**
-     * Đăng ký tài khoản mới với email và mã xác nhận
-     */
-    async register(credentials: RegisterRequest): Promise<FlatUser> {
-        try {
-            console.log('Registering new user with email:', credentials.email);
-            console.log('Using baseURL:', this.baseURL);
-
-            const response = await axios.post<RegisterResponse>(
-                `${this.baseURL}/v2/register/email`,
-                credentials,
-                {
-                    headers: {
-                        'Content-Type': 'application/json',
-                    }
-                }
-            );
-
-            if (response.data.status !== 0) {
-                throw new Error('Registration failed');
-            }
-
-            console.log('Flat.io registration successful, Response:', response.data.data);
-            console.log('User UUID:', response.data.data.userUUID);
-            console.log('Token:', response.data.data.token);
-
-            return {
-                ...response.data.data,
-                clientKey: '', // Registration response không có clientKey
-                email: credentials.email
-            };
-
-        } catch (error: any) {
-            console.error('Error registering to Flat.io:', error);
-            console.error('Error response:', error.response?.data);
-            throw new Error(`Failed to register to Flat.io: ${error.response?.data?.message || error.message}`);
-        }
-    }
-
-    /**
-     * Đăng nhập vào Flat
-     */
-    async login(credentials: FlatLoginRequest): Promise<FlatUser> {
-        try {
-            console.log('Logging into Flat.io with email:', credentials.email);
-            console.log('Using baseURL:', this.baseURL);
-
-            const response = await axios.post<FlatLoginResponse>(
-                `${this.baseURL}/v2/login/email`,
-                credentials,
-                {
-                    headers: {
-                        'Content-Type': 'application/json',
-                    }
-                }
-            );
-
-            if (response.data.status !== 0) {
-                throw new Error('Login failed');
-            }
-
-            console.log('Flat.io login successful, Response:', response.data.data);
-            console.log('User UUID:', response.data.data.userUUID);
-            console.log('Token:', response.data.data.token);
-            console.log('Client Key:', response.data.data.clientKey);
-
-            return {
-                ...response.data.data,
-                email: credentials.email
-            };
-
-        } catch (error: any) {
-            console.error('Error logging into Flat.io:', error);
-            console.error('Error response:', error.response?.data);
-            throw new Error(`Failed to login to Flat.io: ${error.response?.data?.message || error.message}`);
-        }
+    constructor(baseURL: string) {
+        this.baseURL = baseURL;
     }
 
     /**
@@ -399,7 +59,9 @@ export class FlatService {
         }
     }
 
-
+    /**
+     * Dừng phòng
+     */
     async stopRoom(roomUUID: string, token: string): Promise<StopRoomResponse['data']> {
         try {
             console.log('Stopping room:', roomUUID);
@@ -434,6 +96,7 @@ export class FlatService {
             throw new Error(`Failed to stop room: ${error.response?.data?.message || error.message}`);
         }
     }
+
     /**
      * Tạo phòng ordinary mới (legacy method)
      */
@@ -443,11 +106,11 @@ export class FlatService {
         beginTime: number;
         endTime: number;
         email: string;
-    }, customer: any): Promise<FlatRoom> {
+    }, customer: any): Promise<FlatRoomResponse> {
         try {
-            const publicUrl = process.env.NEXT_PUBLIC_URL || 'localhost:3000'
+            const publicUrl = process.env.NEXT_PUBLIC_URL || 'localhost:3000';
             // Tạo clientKey từ secret_key của customer
-            const clientKey = this.generateClientKey(customer.secret_key ?? customer.flatUser.clientKey);
+            const clientKey = generateClientKey(customer.secret_key ?? customer.flatUser.clientKey);
 
             const tokenResponse = await fetch(`${publicUrl}/data-token/create-room-token`, {
                 method: 'POST',
@@ -467,20 +130,22 @@ export class FlatService {
             const { token } = await tokenResponse.json();
 
             // Gọi API tạo phòng với token
-            const result = await this.createRoomWithToken(token)
+            const result = await this.createRoomWithToken(token);
             if (result.status === 0) {
                 const flatRoom = {
-                    roomUUID: result.data.roomUUID,
-                    roomId: result.data.roomId,
-                    joinUrl: `${process.env.NEXT_PUBLIC_FLAT_CMS_BASE_URL}/join/${result.data.roomUUID}`,
-                    createdAt: result.data.createdAt
-                };
+                    status: 0,
+                    data: {
+                        roomUUID: result.data.roomUUID,
+                        joinUrl: `${process.env.NEXT_PUBLIC_FLAT_CMS_BASE_URL}/join/${result.data.roomUUID}`,
+                        inviteCode: result.data.inviteCode
+                    }
 
+                };
 
                 return flatRoom;
 
             } else {
-                throw new Error(result.message || 'Failed to create room');
+                throw new Error(JSON.stringify(result) || 'Failed to create room');
             }
 
         } catch (error: any) {
@@ -488,7 +153,10 @@ export class FlatService {
         }
     }
 
-    async createRoomWithToken(token) : Promise<FlatRoomResponse> {
+    /**
+     * Tạo phòng với token
+     */
+    async createRoomWithToken(token: string): Promise<FlatRoomResponse> {
         const response = await fetch(`${this.baseURL}/v1/room/create/ordinary-by-user`, {
             method: 'POST',
             headers: {
@@ -499,7 +167,10 @@ export class FlatService {
         return response.json();
     }
 
-    async updateRoomWithToken(token) : Promise<FlatRoomResponse> {
+    /**
+     * Cập nhật phòng với token
+     */
+    async updateRoomWithToken(token: string): Promise<FlatRoomResponse> {
         const response = await fetch(`${this.baseURL}/v1/user/organization/room/update/ordinary`, {
             method: 'POST',
             headers: {
@@ -552,9 +223,9 @@ export class FlatService {
      * Lấy tổng số phút của tất cả các phòng
      */
     async getTotalRoomMinutes(token: string, options?: {
-        startDate?: Date;    // Lọc từ ngày
-        endDate?: Date;      // Lọc đến ngày
-        roomStatus?: string; // Lọc theo trạng thái
+        startDate?: Date;
+        endDate?: Date;
+        roomStatus?: string;
         page?: number;
         limit?: number;
     }): Promise<TotalMinutesResponse> {
@@ -570,7 +241,7 @@ export class FlatService {
             } = options || {};
 
             // Lấy tất cả các phòng
-            const allRooms: any[] = [];
+            const allRooms: RoomItem[] = [];
             let currentPage = page;
             let hasMore = true;
 
@@ -602,13 +273,13 @@ export class FlatService {
 
             if (startDate) {
                 filteredRooms = filteredRooms.filter(room =>
-                    new Date(room.room_begin_time) >= startDate
+                    new Date(room.begin_time) >= startDate
                 );
             }
 
             if (endDate) {
                 filteredRooms = filteredRooms.filter(room =>
-                    new Date(room.room_begin_time) <= endDate
+                    new Date(room.begin_time) <= endDate
                 );
             }
 
@@ -649,16 +320,16 @@ export class FlatService {
                 } catch (error) {
                     console.error(`Error processing room ${room.room_uuid}:`, error);
                     // Vẫn tính toán dựa trên thông tin cơ bản nếu không lấy được chi tiết
-                    if (room.room_begin_time && room.room_end_time) {
-                        const beginTime = new Date(room.room_begin_time).getTime();
-                        const endTime = new Date(room.room_end_time).getTime();
+                    if (room.begin_time && room.end_time) {
+                        const beginTime = new Date(room.begin_time).getTime();
+                        const endTime = new Date(room.end_time).getTime();
                         const duration = Math.max(0, Math.round((endTime - beginTime) / (1000 * 60)));
 
                         totalMinutes += duration;
 
                         roomsWithDetails.push({
                             roomUUID: room.room_uuid,
-                            title: room.room_title,
+                            title: room.title,
                             duration: duration,
                             beginTime: beginTime,
                             endTime: endTime,
@@ -745,7 +416,7 @@ export class FlatService {
                     }
                 }
             );
-            console.log('Response:', (response))
+
             if (response.data.status !== 0) {
                 throw new Error('Failed to fetch room participants');
             }
@@ -818,65 +489,4 @@ export class FlatService {
             throw new Error(`Failed to fetch all room participants: ${error.message}`);
         }
     }
-
-    /**
-     * Lấy tổng số participants của nhiều rooms
-     */
-    async getTotalParticipantsForAllRoomUnderOrganization(
-        token: string,
-        options?: {
-            page?: number;
-            limit?: number;
-        }
-    ): Promise<OrganizationUsersSummary> {
-        try {
-            console.log('Fetching organization users');
-            console.log('Using baseURL:', this.baseURL);
-
-            const page = options?.page || 1;
-            const limit = options?.limit || 10;
-
-            const response = await axios.get<OrganizationUsersResponse>(
-                `${this.baseURL}/v1/user/organization/list-user`,
-                {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json',
-                    },
-                    params: {
-                        page,
-                        limit
-                    }
-                }
-            );
-
-            if (response.data.status !== 0) {
-                throw new Error('Failed to fetch organization users');
-            }
-
-            console.log('Organization users fetched successfully:', {
-                total: response.data.data.total,
-                usersCount: response.data.data.list.length,
-                page: response.data.data.page,
-                limit: response.data.data.limit
-            });
-
-            return {
-                totalUsers: response.data.data.total,
-                users: response.data.data.list,
-                page: response.data.data.page,
-                limit: response.data.data.limit
-            };
-
-        } catch (error: any) {
-            console.error('Error fetching organization users:', error);
-            console.error('Error response:', error.response?.data);
-            throw new Error(`Failed to fetch organization users: ${error.response?.data?.message || error.message}`);
-        }
-    }
-
-
 }
-
-// Export singleton instance
-export const flatService = new FlatService();

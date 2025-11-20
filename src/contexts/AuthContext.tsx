@@ -2,7 +2,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { FlatUser } from '@/services/flatService';
+import { FlatUser } from '@/services/flat/types';
 
 interface AuthContextType {
     user: FlatUser | null;

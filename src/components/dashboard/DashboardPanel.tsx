@@ -2,7 +2,7 @@
 'use client';
 
 import { useState } from 'react';
-import { FlatUser } from '@/services/flatService';
+import { FlatUser } from '@/services/flat/types';
 import UserProfile from './panels/UserProfile';
 import RoomManagement from './panels/RoomManagement';
 import Analytics from './panels/Analytics';

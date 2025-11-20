@@ -1,6 +1,6 @@
 // src/app/api/auth/register/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { flatService } from '@/services/flatService';
+import { flatService } from '@/services/flat';
 import {getPayload} from "payload";
 import config from "@payload-config";
 

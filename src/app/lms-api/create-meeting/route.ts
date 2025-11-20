@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import config from '@payload-config'
 import {authenticateCustomer} from "../../../../lib/moodle-auth-utils";
-import {flatService} from "@/services/flatService";
+import {flatService} from "@/services/flat";
 import jwt from 'jsonwebtoken';
 
 export async function POST(request: Request) {
@@ -98,7 +98,7 @@ export async function POST(request: Request) {
 // import { getPayload } from 'payload'
 // import config from '@payload-config'
 // import {authenticateCustomer} from "../../../../lib/moodle-auth-utils";
-// import {flatService} from "@/services/flatService";
+// import {flatService} from "@/services/flat";
 //
 // // =================================================================
 // // CREATE

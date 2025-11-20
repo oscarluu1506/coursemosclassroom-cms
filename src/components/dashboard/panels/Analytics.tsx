@@ -2,7 +2,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { FlatUser, flatService, TotalMinutesResponse, RoomInfoResponse, RoomItem } from '@/services/flatService';
+import {FlatUser, TotalMinutesResponse, RoomInfoResponse, RoomItem} from '@/services/flat/types'
+import { flatService, } from '@/services/flat';
 
 interface AnalyticsProps {
     user: FlatUser;
