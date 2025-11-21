@@ -44,29 +44,39 @@ export async function POST(request: Request) {
             joinUrl: `${process.env.NEXT_PUBLIC_FLAT_CMS_BASE_URL}/join/${flatRoomResponse.data.roomUUID}`,
         };
         console.log('Flat room created successfully:', flatRoom.roomUUID);
-
+        let users = [];
+        if (decoded.users && Array.isArray(decoded.users)) {
+            users = decoded.users.map((email: string) => ({
+                email: email
+            }));
+        }
         // Tạo meeting mới
         const newMeeting = await payload.create({
             collection: 'meetings',
             data: {
                 customer_id: customer.id,
                 name: decoded.title,
-                moodle_course_id: formData.get('moodle_course_id') as string || null,
+                moodle_course_id: decoded.moodle_course_id || null,
                 moodle_user_email: decoded.email,
                 start_time: decoded.beginTime,
                 end_time: decoded.endTime,
                 duration: Math.round((parseInt(decoded.endTime) - parseInt(decoded.beginTime)) / (1000 * 60)),
                 flat_room_id: flatRoom.roomUUID,
                 flat_room_link: flatRoom.joinUrl,
+                users: users,
             },
         })
 
         return NextResponse.json(
             {
+                // data: {
+                //     joinUrl: flatRoom.joinUrl,
+                //     newMeeting: newMeeting
+                // }
                 data: {
-                    joinUrl: flatRoom.joinUrl,
-                    newMeeting: newMeeting
-                }
+                        joinUrl: `${process.env.NEXT_PUBLIC_URL}/lms-api/join-meeting?uuid=${flatRoom.roomUUID}`,
+                        newMeeting: newMeeting
+                    }
             },
             { status: 201 }
         )

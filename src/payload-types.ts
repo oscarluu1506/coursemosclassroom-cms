@@ -294,9 +294,18 @@ export interface Meeting {
   start_time?: string | null;
   end_time?: string | null;
   /**
-   * Thời lượng (phút)
+   * Duaration (minute)
    */
   duration?: number | null;
+  /**
+   * Email list
+   */
+  users?:
+    | {
+        email: string;
+        id?: string | null;
+      }[]
+    | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -583,6 +592,12 @@ export interface MeetingsSelect<T extends boolean = true> {
   start_time?: T;
   end_time?: T;
   duration?: T;
+  users?:
+    | T
+    | {
+        email?: T;
+        id?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
 }

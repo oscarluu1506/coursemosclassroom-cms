@@ -55,7 +55,21 @@ export const Meetings: CollectionConfig = {
             name: 'duration',
             type: 'number',
             admin: {
-                description: 'Thời lượng (phút)',
+                description: 'Duaration (minute)',
+            },
+        },
+        {
+            name: 'users',
+            type: 'array',
+            fields: [
+                {
+                    name: 'email',
+                    type: 'text',
+                    required: true,
+                },
+            ],
+            admin: {
+                description: 'Email list',
             },
         },
     ],

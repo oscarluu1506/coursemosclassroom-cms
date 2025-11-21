@@ -31,6 +31,7 @@ interface DecodedToken {
     beginTime?: string
     endTime?: string
     duration?: string
+    users?: string[] // Thay đổi từ any sang string[]
 }
 
 interface UpdateMeetingData {
@@ -38,6 +39,7 @@ interface UpdateMeetingData {
     start_time: string | null
     end_time: string | null
     duration: number | null
+    users?: any[] // Thêm trường users
 }
 
 export async function POST(request: Request) {
@@ -122,12 +124,25 @@ export async function POST(request: Request) {
             )
         }
 
+        // Prepare users data - chuyển đổi từ string[] sang object[]
+        let usersData = undefined;
+        if (decoded.users && Array.isArray(decoded.users)) {
+            usersData = decoded.users.map((email: string) => ({
+                email: email.trim()
+            }));
+        }
+
         // Prepare update data
         const dataToUpdate: UpdateMeetingData = {
             name: decoded.title,
             start_time: decoded.beginTime ?? null,
             end_time: decoded.endTime ?? null,
             duration: decoded.duration ? parseInt(decoded.duration) : null,
+        }
+
+        // Chỉ thêm users vào data nếu có giá trị
+        if (usersData !== undefined) {
+            dataToUpdate.users = usersData;
         }
 
         // Update meeting
@@ -142,7 +157,7 @@ export async function POST(request: Request) {
             const flatRoomResponse = await flatService.updateRoomWithToken(token)
             console.log(flatRoomResponse)
             if (flatRoomResponse.status === 0) {
-                console.log('Flat room updated successfully',flatRoomResponse)
+                console.log('Flat room updated successfully', flatRoomResponse)
             } else {
                 console.warn('Flat room update returned non-zero status:', flatRoomResponse)
             }
